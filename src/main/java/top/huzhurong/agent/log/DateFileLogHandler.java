@@ -16,7 +16,7 @@ import java.util.logging.LogRecord;
  */
 class DateFileLogHandler extends Handler {
 
-    private final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+    private final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd:HH");
 
     private volatile FileHandler handler;
 
@@ -103,9 +103,7 @@ class DateFileLogHandler extends Handler {
                 handler.setFormatter(this.getFormatter());
                 handler.setLevel(this.getLevel());
             }
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (SecurityException | IOException e) {
             e.printStackTrace();
         }
     }

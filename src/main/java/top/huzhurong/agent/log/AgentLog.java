@@ -3,6 +3,8 @@ package top.huzhurong.agent.log;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * jul 日志，支持占位符语法
@@ -47,4 +49,18 @@ public class AgentLog extends AbstractLog {
         log.log(Level.WARNING, detail, e);
     }
 
+    private static String changeMode(String msg) {
+        Matcher matcher = PATTERN.matcher(msg);
+        if (!matcher.matches()) {
+            return msg;
+        }
+        StringBuilder stringBuilder = new StringBuilder();
+        String[] split = msg.split("\\{}");
+        for (int i = 0; i < split.length; i++) {
+            stringBuilder.append(split[i]).append("{").append(i).append("}");
+        }
+        return stringBuilder.toString();
+    }
+
+    private static Pattern PATTERN = Pattern.compile("\\{}");
 }

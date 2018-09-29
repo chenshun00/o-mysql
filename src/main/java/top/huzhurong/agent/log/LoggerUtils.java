@@ -27,11 +27,9 @@ class LoggerUtils {
             }
 
             logger.setUseParentHandlers(false);
-            // Remove all current handlers.
             for (Handler h : handlers) {
                 logger.removeHandler(h);
             }
-            // Attach the given handler.
             logger.addHandler(handler);
         } finally {
             LOCK.unlock();

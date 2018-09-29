@@ -1,5 +1,13 @@
 package top.huzhurong.agent.instrumentation;
 
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Opcodes;
+import top.huzhurong.agent.hook.MysqlHookVisitor;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
@@ -19,6 +27,24 @@ public class OMysqlTransaformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        return new byte[0];
+        if (className.equals("com.mysql.jdbc.MysqlIO".replace(".", "/"))) {
+            ClassReader classReader = new ClassReader(classfileBuffer);
+            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, null), ClassReader.EXPAND_FRAMES);
+            writeToFile(classWriter, className);
+            classfileBuffer = classWriter.toByteArray();
+        }
+        return classfileBuffer;
+    }
+
+
+    private void writeToFile(ClassWriter classWriter, String name) {
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(name.replaceAll("/", ".") + ".class");
+            fileOutputStream.write(classWriter.toByteArray());
+            fileOutputStream.close();
+        } catch (IOException ignore) {
+            ignore.printStackTrace();
+        }
     }
 }
