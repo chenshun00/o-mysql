@@ -5,6 +5,7 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import top.huzhurong.agent.hook.MysqlHookVisitor;
+import top.huzhurong.agent.inter.AgentRowData;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class OMysqlTransaformer implements ClassFileTransformer {
         if (className.equals("com.mysql.jdbc.MysqlIO".replace(".", "/"))) {
             ClassReader classReader = new ClassReader(classfileBuffer);
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, null), ClassReader.EXPAND_FRAMES);
+            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, AgentRowData.class), ClassReader.EXPAND_FRAMES);
             writeToFile(classWriter, className);
             classfileBuffer = classWriter.toByteArray();
         }
@@ -44,7 +45,7 @@ public class OMysqlTransaformer implements ClassFileTransformer {
             fileOutputStream.write(classWriter.toByteArray());
             fileOutputStream.close();
         } catch (IOException ignore) {
-            ignore.printStackTrace();
+
         }
     }
 }

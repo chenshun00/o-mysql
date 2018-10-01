@@ -1,13 +1,12 @@
 package top.huzhurong.agent.hook;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 
 import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
+
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author luobo.cs@raycloud.com
@@ -41,5 +40,42 @@ public class MysqlHookVisitor extends ClassVisitor {
             return new MethodAdviceAdapter(Opcodes.ASM5, mv, access, name, descriptor);
         }
         return mv;
+    }
+
+    @Override
+    public void visitEnd() {
+
+        {
+            FieldVisitor fv = super.visitField(ACC_PRIVATE, "interMethod", "Lcom/mysql/jdbc/ResultSetInternalMethods;", null, null);
+            fv.visitEnd();
+        }
+        {
+            MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "setSetMethod", "(Lcom/mysql/jdbc/ResultSetInternalMethods;)V", null, null);
+            mv.visitCode();
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitVarInsn(ALOAD, 1);
+            mv.visitFieldInsn(PUTFIELD, "com/mysql/jdbc/MysqlIO", "interMethod", "Lcom/mysql/jdbc/ResultSetInternalMethods;");
+            mv.visitInsn(RETURN);
+            mv.visitMaxs(1, 1);
+            mv.visitEnd();
+        }
+
+        {
+            MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "getRowData", "()Ljava/lang/Integer;", null, null);
+            mv.visitCode();
+
+            mv.visitVarInsn(ALOAD, 0);
+
+            mv.visitInsn(ACONST_NULL);
+            mv.visitFieldInsn(PUTFIELD, "com/mysql/jdbc/MysqlIO", "interMethod", "Lcom/mysql/jdbc/ResultSetInternalMethods;");
+
+            mv.visitInsn(ICONST_1);
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+            mv.visitInsn(ARETURN);
+
+            mv.visitMaxs(2, 2);
+            mv.visitEnd();
+        }
+        super.visitEnd();
     }
 }

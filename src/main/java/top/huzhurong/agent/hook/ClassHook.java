@@ -1,6 +1,7 @@
 package top.huzhurong.agent.hook;
 
 import org.objectweb.asm.Type;
+import top.huzhurong.agent.inter.AgentRowData;
 
 import java.lang.reflect.Method;
 
@@ -46,13 +47,21 @@ public class ClassHook {
     }
 
 
-    public static void endMethod() {
+    public static void endMethod(Object currentObject, Object[] args) {
         Long aLong = threadLocal.get();
         if (aLong != null) {
             threadLocal.remove();
             long l = System.currentTimeMillis();
             long rt = l - aLong;
             System.out.println("rt:" + rt + "(ms)");
+            try {
+                if (currentObject instanceof AgentRowData) {
+                    AgentRowData data = (AgentRowData) currentObject;
+                    System.out.println("扫描行数:" + 10);
+                }
+            } catch (NullPointerException ignore) {
+
+            }
         }
     }
 

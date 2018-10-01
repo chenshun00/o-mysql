@@ -53,6 +53,7 @@ public class MethodAdviceAdapter extends AdviceAdapter {
     @Override
     protected void onMethodExit(int opcode) {
         super.onMethodExit(opcode);
+        insertParameter();
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassHook.CLASS_NAME, ClassHook.END_METHOD_NAME, ClassHook.END_METHOD_DESC, false);
     }
 
