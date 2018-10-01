@@ -35,16 +35,25 @@ public class ClassHook {
         }
     }
 
+    static ThreadLocal<Long> threadLocal = new ThreadLocal<>();
+
     public static void enterMethod(Object currentObject, Object[] args) {
         if (args.length > 0 && args[0] != null && args[0].toString().length() > 48) {
-            System.out.println(args[0].toString().substring(47).replace("\t", " ")
-                    .replace("\n", " ").replaceAll("\\s{2,5}", " "));
+            System.out.println(args[0].toString().substring(47).replace("\t", "")
+                    .replace("\n", "").replaceAll("\\s+", " "));
+            threadLocal.set(System.currentTimeMillis());
         }
     }
 
 
     public static void endMethod() {
-
+        Long aLong = threadLocal.get();
+        if (aLong != null) {
+            threadLocal.remove();
+            long l = System.currentTimeMillis();
+            long rt = l - aLong;
+            System.out.println("rt:" + rt + "(ms)");
+        }
     }
 
     public static void errorMethod() {
