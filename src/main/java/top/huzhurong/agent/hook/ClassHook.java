@@ -1,7 +1,7 @@
 package top.huzhurong.agent.hook;
 
 import org.objectweb.asm.Type;
-import top.huzhurong.agent.inter.AgentRowData;
+import top.huzhurong.agent.inter.ResultSet;
 
 import java.lang.reflect.Method;
 
@@ -39,31 +39,59 @@ public class ClassHook {
     static ThreadLocal<Long> threadLocal = new ThreadLocal<>();
 
     public static void enterMethod(Object currentObject, Object[] args) {
-        if (args.length > 0 && args[0] != null && args[0].toString().length() > 48) {
-            System.out.println(args[0].toString().substring(47).replace("\t", "")
-                    .replace("\n", "").replaceAll("\\s+", " "));
-            threadLocal.set(System.currentTimeMillis());
-        }
+        threadLocal.set(System.currentTimeMillis());
     }
 
 
-    public static void endMethod(Object currentObject, Object[] args) {
+    /**
+     * @param object        返回值
+     * @param currentObject this/null
+     * @param args          方法参数
+     */
+    public static void endMethod(Object object, Object currentObject, Object[] args) {
         Long aLong = threadLocal.get();
         if (aLong != null) {
             threadLocal.remove();
             long l = System.currentTimeMillis();
             long rt = l - aLong;
-            System.out.println("rt:" + rt + "(ms)");
+            System.out.println();
             try {
-                if (currentObject instanceof AgentRowData) {
-                    AgentRowData data = (AgentRowData) currentObject;
-                    System.out.println("扫描行数:" + 10);
+                if (object instanceof ResultSet) {
+                    ResultSet resultSet = (ResultSet) object;
+                    if (resultSet.getASMRowData() != null) {
+                        String sql = currentObject.toString().substring(47).trim().replace("\t", "")
+                                .replace("\n", "").replaceAll("\\s+", " ");
+                        System.out.println("【sql:" + sql + "】,【rt:" + rt + "(ms)】,【扫描行数:" + resultSet.getASMRowData().size() + "】");
+                    }
+                } else {
+                    System.out.println("没有instanceos");
                 }
-            } catch (NullPointerException ignore) {
-
+            } catch (Throwable ignore) {
+                ignore.printStackTrace();
             }
         }
     }
+
+    public static String getSql(Object comMysqlJdbcBuffer) throws Throwable {
+        StringBuilder buffer = new StringBuilder();
+        Method getByteBuffer = comMysqlJdbcBuffer.getClass().getDeclaredMethod("getByteBuffer");
+        byte[] getByteBuffers = (byte[]) getByteBuffer.invoke(comMysqlJdbcBuffer);
+        for (int i = 0; i < 4; ++i) {
+            String hexVal = Integer.toHexString(getByteBuffers[i] & 255);
+            if (hexVal.length() == 1) {
+                hexVal = "0" + hexVal;
+            }
+            buffer.insert(0, hexVal);
+        }
+        Integer integer = Integer.decode(buffer.insert(0, "0x").toString());
+        if (integer > 2048) {
+            integer = 2048;
+        }
+        byte[] bytes = new byte[integer];
+        System.arraycopy(getByteBuffers, 5, bytes, 0, integer - 1);
+        return new String(bytes).replace("\r", " ").replace("\n", " ").replace("\t", " ").trim();
+    }
+
 
     public static void errorMethod() {
 

@@ -33,16 +33,8 @@ public class MethodAdviceAdapter extends AdviceAdapter {
     public void visitCode() {
         mv.visitCode();
         mv.visitLabel(start);
-        super.visitCode();
-        mv.visitLabel(new Label());
         insertParameter();
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassHook.CLASS_NAME, ClassHook.ENTER_METHOD_NAME, ClassHook.ENTER_METHOD_DESC, false);
-    }
-
-    @Override
-    public void visitEnd() {
-        mv.visitLabel(end);
-        super.visitEnd();
     }
 
     @Override
@@ -51,10 +43,39 @@ public class MethodAdviceAdapter extends AdviceAdapter {
     }
 
     @Override
-    protected void onMethodExit(int opcode) {
-        super.onMethodExit(opcode);
+    public void onMethodExit(int opcode) {
+        if (opcode == ATHROW) {
+            return;
+        }
+        if (opcode == RETURN) {
+            visitInsn(1);
+        } else if (opcode == ACONST_NULL) {
+            //返回的是对象
+            dup();
+        } else {
+            if ((opcode == LRETURN) || (opcode == DRETURN)) {
+                dup2();
+            } else {
+                dup();
+            }
+            box(Type.getReturnType(this.methodDesc));
+        }
         insertParameter();
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, ClassHook.CLASS_NAME, ClassHook.END_METHOD_NAME, ClassHook.END_METHOD_DESC, false);
+        mv.visitMethodInsn(INVOKESTATIC, ClassHook.CLASS_NAME,
+                ClassHook.END_METHOD_NAME, ClassHook.END_METHOD_DESC, false);
+    }
+
+    @Override
+    public void visitEnd() {
+        mv.visitLabel(end);
+        mv.visitTryCatchBlock(start, end, end, null);
+        mv.visitInsn(DUP);
+        insertParameter();
+        mv.visitMethodInsn(INVOKESTATIC, ClassHook.CLASS_NAME,
+                ClassHook.END_METHOD_NAME, ClassHook.END_METHOD_DESC, false);
+        //未捕获的异常会进入这里
+        mv.visitInsn(ATHROW); // 重新把异常抛出
+        mv.visitEnd();
     }
 
     private void insertParameter() {

@@ -1,11 +1,11 @@
 package top.huzhurong.agent.instrumentation;
 
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import top.huzhurong.agent.hook.MysqlHookVisitor;
-import top.huzhurong.agent.inter.AgentRowData;
+import top.huzhurong.agent.inter.ResultSet;
+import top.huzhurong.agent.inter.RowData;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -28,13 +28,30 @@ public class OMysqlTransaformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-        if (className.equals("com.mysql.jdbc.MysqlIO".replace(".", "/"))) {
+        if (className.equals("com.mysql.jdbc.PreparedStatement".replace(".", "/"))) {
             ClassReader classReader = new ClassReader(classfileBuffer);
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, AgentRowData.class), ClassReader.EXPAND_FRAMES);
+            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, null), ClassReader.EXPAND_FRAMES);
             writeToFile(classWriter, className);
             classfileBuffer = classWriter.toByteArray();
         }
+
+        if (className.equals("com.mysql.jdbc.ResultSetImpl".replace(".", "/"))) {
+            ClassReader classReader = new ClassReader(classfileBuffer);
+            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, ResultSet.class), ClassReader.EXPAND_FRAMES);
+            writeToFile(classWriter, className);
+            classfileBuffer = classWriter.toByteArray();
+        }
+
+        if (className.equals("com/mysql/jdbc/RowDataStatic")) {
+            ClassReader classReader = new ClassReader(classfileBuffer);
+            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, RowData.class), ClassReader.EXPAND_FRAMES);
+            writeToFile(classWriter, className);
+            classfileBuffer = classWriter.toByteArray();
+        }
+
         return classfileBuffer;
     }
 

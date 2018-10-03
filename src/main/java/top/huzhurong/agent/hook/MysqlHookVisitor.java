@@ -36,46 +36,45 @@ public class MysqlHookVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         MethodVisitor mv = cv.visitMethod(access, name, descriptor, signature, exceptions);
-        if (name.equals("sqlQueryDirect")) {
+        if (name.equals("executeInternal") && access == (Opcodes.ACC_PROTECTED)) {
             return new MethodAdviceAdapter(Opcodes.ASM5, mv, access, name, descriptor);
         }
         return mv;
     }
 
     @Override
+    public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+        if (name.equals("rowData")) {
+            MethodVisitor mmv = cv.visitMethod(Opcodes.ACC_PUBLIC, "getASMRowData", "()Ltop/huzhurong/agent/inter/RowData;", null, null);
+
+            mmv.visitCode();
+            mmv.visitVarInsn(Opcodes.ALOAD, 0);
+            mmv.visitFieldInsn(Opcodes.GETFIELD, "com/mysql/jdbc/ResultSetImpl", name, "Lcom/mysql/jdbc/RowData;");
+            mmv.visitInsn(Opcodes.ARETURN);
+            mmv.visitMaxs(2, 1);
+            mmv.visitEnd();
+        }
+        return super.visitField(access, name, descriptor, signature, value);
+    }
+
+    @Override
     public void visitEnd() {
-
-        {
-            FieldVisitor fv = super.visitField(ACC_PRIVATE, "interMethod", "Lcom/mysql/jdbc/ResultSetInternalMethods;", null, null);
-            fv.visitEnd();
-        }
-        {
-            MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "setSetMethod", "(Lcom/mysql/jdbc/ResultSetInternalMethods;)V", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitVarInsn(ALOAD, 1);
-            mv.visitFieldInsn(PUTFIELD, "com/mysql/jdbc/MysqlIO", "interMethod", "Lcom/mysql/jdbc/ResultSetInternalMethods;");
-            mv.visitInsn(RETURN);
-            mv.visitMaxs(1, 1);
-            mv.visitEnd();
-        }
-
-        {
-            MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "getRowData", "()Ljava/lang/Integer;", null, null);
-            mv.visitCode();
-
-            mv.visitVarInsn(ALOAD, 0);
-
-            mv.visitInsn(ACONST_NULL);
-            mv.visitFieldInsn(PUTFIELD, "com/mysql/jdbc/MysqlIO", "interMethod", "Lcom/mysql/jdbc/ResultSetInternalMethods;");
-
-            mv.visitInsn(ICONST_1);
-            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-            mv.visitInsn(ARETURN);
-
-            mv.visitMaxs(2, 2);
-            mv.visitEnd();
-        }
+//        {
+//            MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "size", "()I", null, new String[]{"java/sql/SQLException"});
+//            mv.visitCode();
+//            mv.visitVarInsn(ALOAD, 0);
+//            mv.visitFieldInsn(GETFIELD, "com/mysql/jdbc/PreparedStatement", "results", "Lcom/mysql/jdbc/ResultSetInternalMethods;");
+//            mv.visitTypeInsn(CHECKCAST, "com/mysql/jdbc/JDBC4ResultSet");
+//            mv.visitFieldInsn(GETFIELD, "com/mysql/jdbc/JDBC4ResultSet", "rowData", "Lcom/mysql/jdbc/RowData;");
+//            mv.visitMethodInsn(INVOKEINTERFACE, "com/mysql/jdbc/RowData", "size", "()I", true);
+//            mv.visitInsn(IRETURN);
+//            mv.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/sql/SQLException"});
+//            mv.visitVarInsn(ASTORE, 1);
+//            mv.visitInsn(ICONST_0);
+//            mv.visitInsn(IRETURN);
+//            mv.visitMaxs(1, 2);
+//            mv.visitEnd();
+//        }
         super.visitEnd();
     }
 }
