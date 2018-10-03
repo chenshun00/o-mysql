@@ -7,6 +7,10 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
 
 /**
+ * 调用方法的原则是先将参数入栈，然后在调用方法的时候一个一个的将参数从操作数栈中弹出，同时在方法的底部，即return的前一个指令，必然是返回值
+ * 1、方法参数入栈，例如dup(),加入其他参数，ldc都可以
+ * 2、调用方法 invoke，根据方法的描述符去栈顶拿参数
+ *
  * @author luobo.cs@raycloud.com
  * @since 2018/9/29
  */
@@ -42,17 +46,24 @@ public class MethodAdviceAdapter extends AdviceAdapter {
         super.onMethodEnter();
     }
 
+    /**
+     * opcode 代表的指令是方法返回的值，例如 RETURN 是void的返回值
+     * dup 复制栈顶数值，并压入栈顶,在方法的最后，栈顶元素是返回值了
+     *
+     * @param opcode one of {@link Opcodes#RETURN}, {@link Opcodes#IRETURN}, {@link Opcodes#FRETURN},
+     *               {@link Opcodes#ARETURN}, {@link Opcodes#LRETURN}, {@link Opcodes#DRETURN} or {@link
+     */
     @Override
     public void onMethodExit(int opcode) {
         if (opcode == ATHROW) {
             return;
         }
         if (opcode == RETURN) {
-            visitInsn(1);
+            visitInsn(ACONST_NULL);
         } else if (opcode == ACONST_NULL) {
-            //返回的是对象
             dup();
         } else {
+            //long double 类型是2个嘈 slot
             if ((opcode == LRETURN) || (opcode == DRETURN)) {
                 dup2();
             } else {
@@ -79,11 +90,10 @@ public class MethodAdviceAdapter extends AdviceAdapter {
     }
 
     private void insertParameter() {
-        //目标类是static
-        if ((this.methodAccess & 0x8) == 0) {
+        //注入非static方法 参考Modifier#isStatic
+        if ((this.methodAccess & 0x00000008) == 0) {
             loadThis();
         } else {
-            //null
             mv.visitInsn(Opcodes.ACONST_NULL);
         }
         int size = Type.getArgumentTypes(this.methodDesc).length;

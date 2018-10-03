@@ -54,7 +54,6 @@ public class ClassHook {
             threadLocal.remove();
             long l = System.currentTimeMillis();
             long rt = l - aLong;
-            System.out.println();
             try {
                 if (object instanceof ResultSet) {
                     ResultSet resultSet = (ResultSet) object;
@@ -63,8 +62,6 @@ public class ClassHook {
                                 .replace("\n", "").replaceAll("\\s+", " ");
                         System.out.println("【sql:" + sql + "】,【rt:" + rt + "(ms)】,【扫描行数:" + resultSet.getASMRowData().size() + "】");
                     }
-                } else {
-                    System.out.println("没有instanceos");
                 }
             } catch (Throwable ignore) {
                 ignore.printStackTrace();
@@ -72,6 +69,7 @@ public class ClassHook {
         }
     }
 
+    //从字节数组中计算sql语句
     public static String getSql(Object comMysqlJdbcBuffer) throws Throwable {
         StringBuilder buffer = new StringBuilder();
         Method getByteBuffer = comMysqlJdbcBuffer.getClass().getDeclaredMethod("getByteBuffer");
