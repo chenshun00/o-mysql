@@ -57,6 +57,12 @@ public class MysqlHookVisitor extends ClassVisitor {
         return super.visitField(access, name, descriptor, signature, value);
     }
 
+    //内部类
+    @Override
+    public void visitInnerClass(String name, String outerName, String innerName, int access) {
+        super.visitInnerClass(name, outerName, innerName, access);
+    }
+
     @Override
     public void visitEnd() {
 //        {

@@ -32,6 +32,8 @@ idea可以直接在 `edit configurations` --> `Vm options` 处加入如下命令
 -javaagent:/*[替换成你到jar包位置]*/.m2/repository/top/huzhurong/agent/o-mysql/1.0-SNAPSHOT/o-mysql-1.0-SNAPSHOT.jar
 ```
 
+加入 `-Dmysql.log=yes` jvm参数输出到日志`${user.home}/logs/agent/xxxxx.log`，而不是输出在控制台
+
 #### 使用结果
 
 ```text

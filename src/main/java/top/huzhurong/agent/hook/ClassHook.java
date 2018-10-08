@@ -2,6 +2,7 @@ package top.huzhurong.agent.hook;
 
 import org.objectweb.asm.Type;
 import top.huzhurong.agent.inter.ResultSet;
+import top.huzhurong.agent.log.AgentLog;
 
 import java.lang.reflect.Method;
 
@@ -10,6 +11,12 @@ import java.lang.reflect.Method;
  * @since 2018/9/29
  */
 public class ClassHook {
+
+    private static final String log;
+
+    static {
+        log = System.getProperty("mysql.log", "no");
+    }
 
     public final static String CLASS_NAME = ClassHook.class.getName().replace(".", "/");
 
@@ -60,11 +67,16 @@ public class ClassHook {
                     if (resultSet.getASMRowData() != null) {
                         String sql = currentObject.toString().substring(47).trim().replace("\t", "")
                                 .replace("\n", "").replaceAll("\\s+", " ");
-                        System.out.println("【sql:" + sql + "】,【rt:" + rt + "(ms)】,【扫描行数:" + resultSet.getASMRowData().size() + "】");
+                        String mess = "【sql:" + sql + "】,【rt:" + rt + "(ms)】,【扫描行数:" + resultSet.getASMRowData().size() + "】";
+                        if (log.equals("yes")) {
+                            AgentLog.info(mess);
+                        } else {
+                            System.out.println(mess);
+                        }
                     }
                 }
-            } catch (Throwable ignore) {
-                ignore.printStackTrace();
+            } catch (Throwable ex) {
+                ex.printStackTrace();
             }
         }
     }
