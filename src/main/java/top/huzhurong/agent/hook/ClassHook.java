@@ -2,6 +2,7 @@ package top.huzhurong.agent.hook;
 
 import org.objectweb.asm.Type;
 import top.huzhurong.agent.inter.sql.ResultSet;
+import top.huzhurong.agent.inter.sql.RowData;
 import top.huzhurong.agent.log.AgentLog;
 
 import java.lang.reflect.Method;
@@ -64,10 +65,11 @@ public class ClassHook {
             try {
                 if (object instanceof ResultSet) {
                     ResultSet resultSet = (ResultSet) object;
-                    if (resultSet.getASMRowData() != null) {
+                    RowData asmRowData = resultSet.getASMRowData();
+                    if (asmRowData != null) {
                         String sql = currentObject.toString().substring(47).trim().replace("\t", "")
                                 .replace("\n", "").replaceAll("\\s+", " ");
-                        String mess = "【sql:" + sql + "】,【rt:" + rt + "(ms)】,【扫描行数:" + resultSet.getASMRowData().size() + "】";
+                        String mess = "【sql:" + sql + "】,【rt:" + rt + "(ms)】,【扫描行数:" + asmRowData.size() + "】";
                         if (log.equals("yes")) {
                             AgentLog.info(mess);
                         } else {
@@ -103,7 +105,7 @@ public class ClassHook {
     }
 
 
-    public static void errorMethod() {
+    public static void errorMethod(Throwable ex, Object cur, Object[] args) {
 
     }
 }

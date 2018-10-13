@@ -29,7 +29,7 @@ public class MethodAdviceAdapter extends AdviceAdapter {
      * @param name          the method's name.
      * @param descriptor    the method's descriptor (see {@link Type Type}).
      */
-    protected MethodAdviceAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor) {
+    MethodAdviceAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor) {
         super(api, methodVisitor, access, name, descriptor);
     }
 
@@ -76,14 +76,16 @@ public class MethodAdviceAdapter extends AdviceAdapter {
                 ClassHook.END_METHOD_NAME, ClassHook.END_METHOD_DESC, false);
     }
 
+    /**
+     * 最后包装一下异常，有可能开发人员会自己处理这个异常，重新将异常抛出
+     */
     @Override
     public void visitEnd() {
         mv.visitLabel(end);
         mv.visitTryCatchBlock(start, end, end, null);
         mv.visitInsn(DUP);
         insertParameter();
-        mv.visitMethodInsn(INVOKESTATIC, ClassHook.CLASS_NAME,
-                ClassHook.END_METHOD_NAME, ClassHook.END_METHOD_DESC, false);
+        mv.visitMethodInsn(INVOKESTATIC, ClassHook.CLASS_NAME, ClassHook.ERROR_METHOD_NAME, ClassHook.ERROR_METHOD_DESC, false);
         //未捕获的异常会进入这里
         mv.visitInsn(ATHROW); // 重新把异常抛出
         mv.visitEnd();

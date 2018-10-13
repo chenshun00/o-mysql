@@ -6,8 +6,6 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static org.objectweb.asm.Opcodes.*;
-
 /**
  * @author luobo.cs@raycloud.com
  * @since 2018/9/29
@@ -26,6 +24,7 @@ public class MysqlHookVisitor extends ClassVisitor {
         if (interfaceName == null) {
             super.visit(version, access, name, signature, superName, interfaces);
         } else {
+            //注入接口
             Set<String> set = new TreeSet<>(Arrays.asList(interfaces));
             set.add(interfaceName.getName().replace(".", "/"));
             String[] strings = set.toArray(new String[0]);
@@ -45,8 +44,7 @@ public class MysqlHookVisitor extends ClassVisitor {
     @Override
     public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
         if (name.equals("rowData")) {
-            MethodVisitor mmv = cv.visitMethod(Opcodes.ACC_PUBLIC, "getASMRowData", "()Ltop/huzhurong/agent/inter/RowData;", null, null);
-
+            MethodVisitor mmv = cv.visitMethod(Opcodes.ACC_PUBLIC, "getASMRowData", "()Ltop/huzhurong/agent/inter/sql/RowData;", null, null);
             mmv.visitCode();
             mmv.visitVarInsn(Opcodes.ALOAD, 0);
             mmv.visitFieldInsn(Opcodes.GETFIELD, "com/mysql/jdbc/ResultSetImpl", name, "Lcom/mysql/jdbc/RowData;");
@@ -65,22 +63,6 @@ public class MysqlHookVisitor extends ClassVisitor {
 
     @Override
     public void visitEnd() {
-//        {
-//            MethodVisitor mv = super.visitMethod(ACC_PUBLIC, "size", "()I", null, new String[]{"java/sql/SQLException"});
-//            mv.visitCode();
-//            mv.visitVarInsn(ALOAD, 0);
-//            mv.visitFieldInsn(GETFIELD, "com/mysql/jdbc/PreparedStatement", "results", "Lcom/mysql/jdbc/ResultSetInternalMethods;");
-//            mv.visitTypeInsn(CHECKCAST, "com/mysql/jdbc/JDBC4ResultSet");
-//            mv.visitFieldInsn(GETFIELD, "com/mysql/jdbc/JDBC4ResultSet", "rowData", "Lcom/mysql/jdbc/RowData;");
-//            mv.visitMethodInsn(INVOKEINTERFACE, "com/mysql/jdbc/RowData", "size", "()I", true);
-//            mv.visitInsn(IRETURN);
-//            mv.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/sql/SQLException"});
-//            mv.visitVarInsn(ASTORE, 1);
-//            mv.visitInsn(ICONST_0);
-//            mv.visitInsn(IRETURN);
-//            mv.visitMaxs(1, 2);
-//            mv.visitEnd();
-//        }
         super.visitEnd();
     }
 }
