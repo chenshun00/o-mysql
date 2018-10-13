@@ -4,7 +4,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import top.huzhurong.agent.annotation.InjectInterface;
-import top.huzhurong.agent.hook.MysqlHookVisitor;
+import top.huzhurong.agent.asm.MysqlHookVisitor;
 import top.huzhurong.agent.inter.sql.ResultSet;
 import top.huzhurong.agent.inter.sql.RowData;
 

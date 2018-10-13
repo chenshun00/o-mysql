@@ -1,10 +1,11 @@
-package top.huzhurong.agent.hook;
+package top.huzhurong.agent.asm;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
+import top.huzhurong.agent.hook.ClassHook;
 
 /**
  * 调用方法的原则是先将参数入栈，然后在调用方法的时候一个一个的将参数从操作数栈中弹出，同时在方法的底部，即return的前一个指令，必然是返回值

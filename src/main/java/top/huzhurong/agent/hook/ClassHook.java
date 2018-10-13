@@ -11,7 +11,7 @@ import java.lang.reflect.Method;
  * @author luobo.cs@raycloud.com
  * @since 2018/9/29
  */
-public class ClassHook {
+public abstract class ClassHook {
 
     private static final String log;
 
@@ -21,14 +21,14 @@ public class ClassHook {
 
     public final static String CLASS_NAME = ClassHook.class.getName().replace(".", "/");
 
-    static String ENTER_METHOD_NAME = "enterMethod";
-    static String END_METHOD_NAME = "endMethod";
-    static String ERROR_METHOD_NAME = "errorMethod";
+    public static String ENTER_METHOD_NAME = "enterMethod";
+    public static String END_METHOD_NAME = "endMethod";
+    public static String ERROR_METHOD_NAME = "errorMethod";
 
 
-    static String ENTER_METHOD_DESC;
-    static String END_METHOD_DESC;
-    static String ERROR_METHOD_DESC;
+    public static String ENTER_METHOD_DESC;
+    public static String END_METHOD_DESC;
+    public static String ERROR_METHOD_DESC;
 
     static {
         for (Method method : ClassHook.class.getDeclaredMethods()) {

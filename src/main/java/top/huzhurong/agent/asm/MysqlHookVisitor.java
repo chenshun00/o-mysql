@@ -1,4 +1,4 @@
-package top.huzhurong.agent.hook;
+package top.huzhurong.agent.asm;
 
 import org.objectweb.asm.*;
 
@@ -37,8 +37,9 @@ public class MysqlHookVisitor extends ClassVisitor {
         MethodVisitor mv = cv.visitMethod(access, name, descriptor, signature, exceptions);
         if (name.equals("executeInternal") && access == (Opcodes.ACC_PROTECTED)) {
             return new MethodAdviceAdapter(Opcodes.ASM5, mv, access, name, descriptor);
+        } else {
+            return mv;
         }
-        return mv;
     }
 
     @Override
