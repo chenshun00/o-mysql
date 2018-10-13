@@ -1,7 +1,7 @@
 package top.huzhurong.agent.hook;
 
 import org.objectweb.asm.Type;
-import top.huzhurong.agent.inter.ResultSet;
+import top.huzhurong.agent.inter.sql.ResultSet;
 import top.huzhurong.agent.log.AgentLog;
 
 import java.lang.reflect.Method;

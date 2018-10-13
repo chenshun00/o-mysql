@@ -61,10 +61,10 @@ public class App {
             }
             instrumentation = inst;
             try {
-                instrumentation.addTransformer(new OMysqlTransaformer(instrumentation), true);
+                instrumentation.addTransformer(new OMysqlTransaformer(), true);
             } catch (Exception e) {
                 System.err.println("open-jdk不支持对jdk自带的包做修改.这个错误可以忽略!");
-                instrumentation.addTransformer(new OMysqlTransaformer(instrumentation));
+                instrumentation.addTransformer(new OMysqlTransaformer());
             }
         }
     }

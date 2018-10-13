@@ -3,16 +3,19 @@ package top.huzhurong.agent.instrumentation;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
+import top.huzhurong.agent.annotation.InjectInterface;
 import top.huzhurong.agent.hook.MysqlHookVisitor;
-import top.huzhurong.agent.inter.ResultSet;
-import top.huzhurong.agent.inter.RowData;
+import top.huzhurong.agent.inter.sql.ResultSet;
+import top.huzhurong.agent.inter.sql.RowData;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
-import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author luobo.cs@raycloud.com
@@ -20,14 +23,29 @@ import java.security.ProtectionDomain;
  */
 public class OMysqlTransaformer implements ClassFileTransformer {
 
-    private Instrumentation instrumentation;
+    /**
+     * className --> class
+     */
+    private static Map<String, Class<?>> injectInterface = new HashMap<>();
+    private static Set<Class> annotations = new HashSet<>();
 
-    public OMysqlTransaformer(Instrumentation instrumentation) {
-        this.instrumentation = instrumentation;
+    static {
+        annotations.add(ResultSet.class);
+        annotations.add(RowData.class);
+
+        for (Class annotation : annotations) {
+            if (annotation.isAnnotationPresent(InjectInterface.class)) {
+                InjectInterface ii = (InjectInterface) annotation.getAnnotation(InjectInterface.class);
+                String[] value = ii.value();
+                for (String target : value) {
+                    injectInterface.put(target.replace("\\.", "/"), annotation);
+                }
+            }
+        }
     }
 
     @Override
-    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         if (className.equals("com.mysql.jdbc.PreparedStatement".replace(".", "/"))) {
             ClassReader classReader = new ClassReader(classfileBuffer);
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
@@ -36,18 +54,11 @@ public class OMysqlTransaformer implements ClassFileTransformer {
             classfileBuffer = classWriter.toByteArray();
         }
 
-        if (className.equals("com.mysql.jdbc.ResultSetImpl".replace(".", "/"))) {
+        //注入对应的接口
+        if (injectInterface.containsKey(className)) {
             ClassReader classReader = new ClassReader(classfileBuffer);
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, ResultSet.class), ClassReader.EXPAND_FRAMES);
-            writeToFile(classWriter, className);
-            classfileBuffer = classWriter.toByteArray();
-        }
-
-        if (className.equals("com/mysql/jdbc/RowDataStatic")) {
-            ClassReader classReader = new ClassReader(classfileBuffer);
-            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, RowData.class), ClassReader.EXPAND_FRAMES);
+            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, injectInterface.get(className)), ClassReader.EXPAND_FRAMES);
             writeToFile(classWriter, className);
             classfileBuffer = classWriter.toByteArray();
         }
@@ -55,7 +66,10 @@ public class OMysqlTransaformer implements ClassFileTransformer {
         return classfileBuffer;
     }
 
-
+    /**
+     * @param classWriter 写入文件的二进制类
+     * @param name        名字
+     */
     private void writeToFile(ClassWriter classWriter, String name) {
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(name.replaceAll("/", ".") + ".class");
@@ -65,4 +79,5 @@ public class OMysqlTransaformer implements ClassFileTransformer {
 
         }
     }
+
 }
