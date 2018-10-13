@@ -6,20 +6,21 @@ import top.huzhurong.agent.inter.sql.RowData;
 import top.huzhurong.agent.log.AgentLog;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * @author luobo.cs@raycloud.com
  * @since 2018/9/29
  */
-public abstract class ClassHook {
+public abstract class HookUtils {
 
-    private static final String log;
+    protected static final String log;
 
     static {
         log = System.getProperty("mysql.log", "no");
     }
 
-    public final static String CLASS_NAME = ClassHook.class.getName().replace(".", "/");
+    public final static String CLASS_NAME = HookUtils.class.getName().replace(".", "/");
 
     public static String ENTER_METHOD_NAME = "enterMethod";
     public static String END_METHOD_NAME = "endMethod";
@@ -30,8 +31,13 @@ public abstract class ClassHook {
     public static String END_METHOD_DESC;
     public static String ERROR_METHOD_DESC;
 
+    /**
+     * 对应的hook
+     */
+    public static Map<String, BaseHook> hooks = new StrictMap<>();
+
     static {
-        for (Method method : ClassHook.class.getDeclaredMethods()) {
+        for (Method method : HookUtils.class.getDeclaredMethods()) {
             if (method.getName().equals(ENTER_METHOD_NAME)) {
                 ENTER_METHOD_DESC = Type.getMethodDescriptor(method);
             }
@@ -48,6 +54,7 @@ public abstract class ClassHook {
 
     public static void enterMethod(Object currentObject, Object[] args) {
         threadLocal.set(System.currentTimeMillis());
+        hooks.get("xxx").into(currentObject, args);
     }
 
 
