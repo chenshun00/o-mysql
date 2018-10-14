@@ -4,7 +4,10 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
 import top.huzhurong.agent.annotation.InjectInterface;
-import top.huzhurong.agent.asm.MysqlHookVisitor;
+import top.huzhurong.agent.asm.AgentHookVisitor;
+import top.huzhurong.agent.asm.TraceClassWriter;
+import top.huzhurong.agent.hook.BaseHook;
+import top.huzhurong.agent.hook.sub.MysqlHook;
 import top.huzhurong.agent.inter.sql.ResultSet;
 import top.huzhurong.agent.inter.sql.RowData;
 
@@ -29,7 +32,19 @@ public class OMysqlTransaformer implements ClassFileTransformer {
     private static Map<String, Class<?>> injectInterface = new HashMap<>();
     private static Set<Class> annotations = new HashSet<>();
 
+    private static Map<String, BaseHook> inject_hooks = new HashMap<>();
+    private static Set<BaseHook> hooks = new HashSet<>();
+
     static {
+        hooks.add(MysqlHook.Instance);
+
+        for (BaseHook hook : hooks) {
+            for (String name : hook.getClassName()) {
+                inject_hooks.put(name.replace("\\.", "/"), hook);
+            }
+        }
+
+
         annotations.add(ResultSet.class);
         annotations.add(RowData.class);
 
@@ -46,19 +61,21 @@ public class OMysqlTransaformer implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
-        if (className.equals("com.mysql.jdbc.PreparedStatement".replace(".", "/"))) {
+        //hook 注入
+        if (inject_hooks.containsKey(className)) {
             ClassReader classReader = new ClassReader(classfileBuffer);
-            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, null), ClassReader.EXPAND_FRAMES);
+            ClassWriter classWriter = new TraceClassWriter(classReader, ClassWriter.COMPUTE_MAXS, loader);
+            classReader.accept(new AgentHookVisitor(Opcodes.ASM5, classWriter, injectInterface.get(className), inject_hooks.get(className)),
+                    ClassReader.EXPAND_FRAMES);
             writeToFile(classWriter, className);
             classfileBuffer = classWriter.toByteArray();
         }
 
-        //注入对应的接口
+        //接口注入
         if (injectInterface.containsKey(className)) {
             ClassReader classReader = new ClassReader(classfileBuffer);
             ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
-            classReader.accept(new MysqlHookVisitor(Opcodes.ASM5, classWriter, injectInterface.get(className)), ClassReader.EXPAND_FRAMES);
+            classReader.accept(new AgentHookVisitor(Opcodes.ASM5, classWriter, injectInterface.get(className), null), ClassReader.EXPAND_FRAMES);
             writeToFile(classWriter, className);
             classfileBuffer = classWriter.toByteArray();
         }

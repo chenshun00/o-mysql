@@ -1,24 +1,17 @@
 package top.huzhurong.agent.hook;
 
 import org.objectweb.asm.Type;
-import top.huzhurong.agent.inter.sql.ResultSet;
-import top.huzhurong.agent.inter.sql.RowData;
-import top.huzhurong.agent.log.AgentLog;
+import top.huzhurong.agent.data.ThreadData;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author luobo.cs@raycloud.com
  * @since 2018/9/29
  */
 public abstract class HookUtils {
-
-    protected static final String log;
-
-    static {
-        log = System.getProperty("mysql.log", "no");
-    }
 
     public final static String CLASS_NAME = HookUtils.class.getName().replace(".", "/");
 
@@ -31,10 +24,15 @@ public abstract class HookUtils {
     public static String END_METHOD_DESC;
     public static String ERROR_METHOD_DESC;
 
+    private final static int THREAD_SIZE = 65535;
+
+    private final static ThreadData[] THREAD_DATA = new ThreadData[THREAD_SIZE];
+
+    private final static AtomicLong count = new AtomicLong(0);
     /**
      * 对应的hook
      */
-    public static Map<String, BaseHook> hooks = new StrictMap<>();
+    private static Map<String, BaseHook> hooks = new StrictMap<>();
 
     static {
         for (Method method : HookUtils.class.getDeclaredMethods()) {
@@ -50,69 +48,61 @@ public abstract class HookUtils {
         }
     }
 
-    static ThreadLocal<Long> threadLocal = new ThreadLocal<>();
+    public synchronized static long hookKey(BaseHook baseHook) {
+        long key = count.incrementAndGet();
+        hooks.put(String.valueOf(key), baseHook);
+        return key;
+    }
 
-    public static void enterMethod(Object currentObject, Object[] args) {
-        threadLocal.set(System.currentTimeMillis());
-        hooks.get("xxx").into(currentObject, args);
+    public static void enterMethod(long key, Object currentObject, Object[] args) {
+        Thread thread = Thread.currentThread();
+        int id = (int) thread.getId();
+        if (id >= THREAD_SIZE) {
+            return;
+        }
+        if (THREAD_DATA[id] == null) {
+            ThreadData threadData = new ThreadData();
+            threadData.setCurTime(System.currentTimeMillis());
+            THREAD_DATA[id] = threadData;
+        }
+
+        hooks.get(String.valueOf(key)).into(currentObject, args);
     }
 
 
     /**
-     * @param object        返回值
-     * @param currentObject this/null
+     * @param object        this/null
+     * @param ret 返回值
      * @param args          方法参数
      */
-    public static void endMethod(Object object, Object currentObject, Object[] args) {
-        Long aLong = threadLocal.get();
-        if (aLong != null) {
-            threadLocal.remove();
-            long l = System.currentTimeMillis();
-            long rt = l - aLong;
-            try {
-                if (object instanceof ResultSet) {
-                    ResultSet resultSet = (ResultSet) object;
-                    RowData asmRowData = resultSet.getASMRowData();
-                    if (asmRowData != null) {
-                        String sql = currentObject.toString().substring(47).trim().replace("\t", "")
-                                .replace("\n", "").replaceAll("\\s+", " ");
-                        String mess = "【sql:" + sql + "】,【rt:" + rt + "(ms)】,【扫描行数:" + asmRowData.size() + "】";
-                        if (log.equals("yes")) {
-                            AgentLog.info(mess);
-                        } else {
-                            System.out.println(mess);
-                        }
-                    }
-                }
-            } catch (Throwable ex) {
-                ex.printStackTrace();
-            }
+    public static void endMethod(Object ret, long key, Object object, Object[] args) {
+        Thread thread = Thread.currentThread();
+        int id = (int) thread.getId();
+        if (id >= THREAD_SIZE) {
+            return;
         }
+        ThreadData thrData = THREAD_DATA[(int) thread.getId()];
+        if (thrData == null) {
+            // 没有执行start,直接执行end/可能是异步停止导致的
+            return;
+        }
+        long curTime = System.currentTimeMillis();
+        long rt = curTime - thrData.getCurTime();
+
+        hooks.get(String.valueOf(key)).out(ret, object, rt, args);
     }
 
-    //从字节数组中计算sql语句
-    public static String getSql(Object comMysqlJdbcBuffer) throws Throwable {
-        StringBuilder buffer = new StringBuilder();
-        Method getByteBuffer = comMysqlJdbcBuffer.getClass().getDeclaredMethod("getByteBuffer");
-        byte[] getByteBuffers = (byte[]) getByteBuffer.invoke(comMysqlJdbcBuffer);
-        for (int i = 0; i < 4; ++i) {
-            String hexVal = Integer.toHexString(getByteBuffers[i] & 255);
-            if (hexVal.length() == 1) {
-                hexVal = "0" + hexVal;
-            }
-            buffer.insert(0, hexVal);
+    public static void errorMethod(Throwable ex, long key, Object cur, Object[] args) {
+        Thread thread = Thread.currentThread();
+        int id = (int) thread.getId();
+        if (id < THREAD_SIZE) {
+            return;
         }
-        Integer integer = Integer.decode(buffer.insert(0, "0x").toString());
-        if (integer > 2048) {
-            integer = 2048;
+        ThreadData thrData = THREAD_DATA[(int) thread.getId()];
+        if (thrData == null) {
+            // 没有执行start,直接执行end/可能是异步停止导致的
+            return;
         }
-        byte[] bytes = new byte[integer];
-        System.arraycopy(getByteBuffers, 5, bytes, 0, integer - 1);
-        return new String(bytes).replace("\r", " ").replace("\n", " ").replace("\t", " ").trim();
-    }
-
-
-    public static void errorMethod(Throwable ex, Object cur, Object[] args) {
-
+        hooks.get(String.valueOf(key)).error(cur, ex, args);
     }
 }

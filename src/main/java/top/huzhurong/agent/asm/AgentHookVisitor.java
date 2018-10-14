@@ -1,6 +1,7 @@
 package top.huzhurong.agent.asm;
 
 import org.objectweb.asm.*;
+import top.huzhurong.agent.hook.BaseHook;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -10,13 +11,15 @@ import java.util.TreeSet;
  * @author luobo.cs@raycloud.com
  * @since 2018/9/29
  */
-public class MysqlHookVisitor extends ClassVisitor {
+public class AgentHookVisitor extends ClassVisitor {
 
     private Class<?> interfaceName;
+    private BaseHook baseHook;
 
-    public MysqlHookVisitor(int api, ClassWriter classWriter, Class<?> interfaceName) {
+    public AgentHookVisitor(int api, ClassWriter classWriter, Class<?> interfaceName, BaseHook hoook) {
         super(api, classWriter);
         this.interfaceName = interfaceName;
+        this.baseHook = hoook;
     }
 
     @Override
@@ -35,11 +38,13 @@ public class MysqlHookVisitor extends ClassVisitor {
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         MethodVisitor mv = cv.visitMethod(access, name, descriptor, signature, exceptions);
-        if (name.equals("executeInternal") && access == (Opcodes.ACC_PROTECTED)) {
-            return new MethodAdviceAdapter(Opcodes.ASM5, mv, access, name, descriptor);
-        } else {
-            return mv;
+        if (baseHook != null && baseHook.getMethodName().containsKey(name)) {
+            String desc = baseHook.getMethodName().get(name);
+            if (desc == null || desc.equals(descriptor)) {
+                return new MethodAdviceAdapter(Opcodes.ASM5, mv, access, name, descriptor, baseHook);
+            }
         }
+        return mv;
     }
 
     @Override

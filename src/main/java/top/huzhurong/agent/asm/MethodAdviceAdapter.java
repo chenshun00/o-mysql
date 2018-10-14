@@ -5,6 +5,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
+import top.huzhurong.agent.hook.BaseHook;
 import top.huzhurong.agent.hook.HookUtils;
 
 /**
@@ -17,6 +18,7 @@ import top.huzhurong.agent.hook.HookUtils;
  */
 public class MethodAdviceAdapter extends AdviceAdapter {
 
+    private long key;
     private Label start = new Label();// 方法方法字节码开始位置
     private Label end = new Label();// 方法方法字节码结束位置
 
@@ -30,8 +32,9 @@ public class MethodAdviceAdapter extends AdviceAdapter {
      * @param name          the method's name.
      * @param descriptor    the method's descriptor (see {@link Type Type}).
      */
-    MethodAdviceAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor) {
+    MethodAdviceAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor, BaseHook baseHook) {
         super(api, methodVisitor, access, name, descriptor);
+        key = HookUtils.hookKey(baseHook);
     }
 
     @Override
@@ -61,7 +64,7 @@ public class MethodAdviceAdapter extends AdviceAdapter {
         }
         if (opcode == RETURN) {
             visitInsn(ACONST_NULL);
-        } else if (opcode == ACONST_NULL) {
+        } else if (opcode == ARETURN) {
             dup();
         } else {
             //long double 类型是2个嘈 slot
@@ -86,13 +89,15 @@ public class MethodAdviceAdapter extends AdviceAdapter {
         mv.visitTryCatchBlock(start, end, end, null);
         mv.visitInsn(DUP);
         insertParameter();
-        mv.visitMethodInsn(INVOKESTATIC, HookUtils.CLASS_NAME, HookUtils.ERROR_METHOD_NAME, HookUtils.ERROR_METHOD_DESC, false);
+        mv.visitMethodInsn(INVOKESTATIC, HookUtils.CLASS_NAME,
+                HookUtils.ERROR_METHOD_NAME, HookUtils.ERROR_METHOD_DESC, false);
         //未捕获的异常会进入这里
         mv.visitInsn(ATHROW); // 重新把异常抛出
         mv.visitEnd();
     }
 
     private void insertParameter() {
+        mv.visitLdcInsn(key);
         //注入非static方法 参考Modifier#isStatic
         if ((this.methodAccess & 0x00000008) == 0) {
             loadThis();
@@ -107,4 +112,11 @@ public class MethodAdviceAdapter extends AdviceAdapter {
         }
     }
 
+    public void visitMaxs(int maxStack, int maxLocals) {
+        if (maxStack == 0) {
+            super.visitMaxs(11, maxLocals + 1);
+        } else {
+            super.visitMaxs(maxStack + 10, maxLocals + 1);
+        }
+    }
 }

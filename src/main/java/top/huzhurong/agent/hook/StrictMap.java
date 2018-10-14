@@ -8,11 +8,11 @@ import java.util.HashMap;
  */
 public class StrictMap<K, V> extends HashMap<K, V> {
 
-    public StrictMap() {
+    StrictMap() {
         this(16);
     }
 
-    public StrictMap(int init) {
+    StrictMap(int init) {
         super(init);
     }
 
