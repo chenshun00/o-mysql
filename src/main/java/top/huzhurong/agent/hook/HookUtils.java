@@ -63,6 +63,7 @@ public abstract class HookUtils {
         if (THREAD_DATA[id] == null) {
             ThreadData threadData = new ThreadData();
             threadData.setCurTime(System.currentTimeMillis());
+            threadData.setKey(key);
             THREAD_DATA[id] = threadData;
         }
 
@@ -71,9 +72,9 @@ public abstract class HookUtils {
 
 
     /**
-     * @param object        this/null
-     * @param ret 返回值
-     * @param args          方法参数
+     * @param object this/null
+     * @param ret    返回值
+     * @param args   方法参数
      */
     public static void endMethod(Object ret, long key, Object object, Object[] args) {
         Thread thread = Thread.currentThread();
@@ -86,6 +87,12 @@ public abstract class HookUtils {
             // 没有执行start,直接执行end/可能是异步停止导致的
             return;
         }
+
+        long tag = thrData.getKey();
+        if (tag != key) {
+            return;
+        }
+
         long curTime = System.currentTimeMillis();
         long rt = curTime - thrData.getCurTime();
 

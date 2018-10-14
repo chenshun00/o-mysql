@@ -7,6 +7,16 @@ package top.huzhurong.agent.data;
 public class ThreadData {
     private long curTime;
 
+    private long key;
+
+    public long getKey() {
+        return key;
+    }
+
+    public void setKey(long key) {
+        this.key = key;
+    }
+
     public long getCurTime() {
         return curTime;
     }
