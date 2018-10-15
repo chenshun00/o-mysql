@@ -11,4 +11,6 @@ public interface ResultSet {
 
     RowData getASMRowData();
 
+    long getUpdateCount();
+
 }

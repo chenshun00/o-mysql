@@ -31,15 +31,19 @@ public class MysqlHook extends BaseHook {
             if (ret instanceof ResultSet) {
                 ResultSet resultSet = (ResultSet) ret;
                 RowData asmRowData = resultSet.getASMRowData();
+                long size;
                 if (asmRowData != null) {
-                    String sql = cur.toString().substring(47).trim().replace("\t", "")
-                            .replace("\n", "").replaceAll("\\s+", " ");
-                    String mess = "【sql:" + sql + "】,【rt:" + execTime + "(ms)】,【扫描行数:" + asmRowData.size() + "】";
-                    if (log.equals("yes")) {
-                        AgentLog.info(mess);
-                    } else {
-                        System.out.println(mess);
-                    }
+                    size = asmRowData.size();
+                } else {
+                    size = resultSet.getUpdateCount();
+                }
+                String sql = cur.toString().substring(48).trim().replace("\t", "")
+                        .replace("\n", "").replaceAll("\\s+", " ");
+                String mess = "【sql:" + sql + "】,【rt:" + execTime + "(ms)】,【扫描行数:" + size + "】";
+                if (log.equals("yes")) {
+                    AgentLog.info(mess);
+                } else {
+                    System.out.println(mess);
                 }
             }
         } catch (Throwable ex) {
