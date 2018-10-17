@@ -37,11 +37,13 @@ idea可以直接在 `edit configurations` --> `Vm options` 处加入如下命令
 #### 使用结果
 
 ```text
+【sql:delete from perform_data where id = 1】,【rt:31(ms)】,【扫描行数:1】
 【sql:SELECT id,context,type,meta_id,add_time FROM perform_data WHERE id = 1154080】,【rt:1(ms)】,【扫描行数:1】
 【sql:SELECT id,context,type,meta_id,add_time FROM perform_data WHERE id = 111111】,【rt:2(ms)】,【扫描行数:0】
+
 ```
 
-> 仅支持 `select`,`update`   
+> 支持 `select`,`update`   
 
 #### Asm 和 agent 的使用
 

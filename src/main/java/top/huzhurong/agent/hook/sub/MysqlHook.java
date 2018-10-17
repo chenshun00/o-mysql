@@ -37,7 +37,7 @@ public class MysqlHook extends BaseHook {
                 } else {
                     size = resultSet.getUpdateCount();
                 }
-                String sql = cur.toString().substring(48).trim().replace("\t", "")
+                String sql = cur.toString().substring(47).trim().replace("\t", "")
                         .replace("\n", "").replaceAll("\\s+", " ");
                 String mess = "【sql:" + sql + "】,【rt:" + execTime + "(ms)】,【扫描行数:" + size + "】";
                 if (log.equals("yes")) {
