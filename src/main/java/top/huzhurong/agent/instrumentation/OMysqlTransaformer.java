@@ -8,6 +8,7 @@ import top.huzhurong.agent.asm.AgentHookVisitor;
 import top.huzhurong.agent.asm.TraceClassWriter;
 import top.huzhurong.agent.hook.BaseHook;
 import top.huzhurong.agent.hook.sub.MysqlHook;
+import top.huzhurong.agent.hook.sub.TestHook;
 import top.huzhurong.agent.inter.sql.ResultSet;
 import top.huzhurong.agent.inter.sql.RowData;
 
