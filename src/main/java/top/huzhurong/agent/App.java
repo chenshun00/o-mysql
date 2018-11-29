@@ -1,7 +1,7 @@
 package top.huzhurong.agent;
 
+import top.huzhurong.agent.data.Timer;
 import top.huzhurong.agent.instrumentation.OMysqlTransaformer;
-import top.huzhurong.agent.log.AgentLog;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,12 +59,16 @@ public class App {
                     }
                 }
             }
+            Timer.init();
             instrumentation = inst;
+            OMysqlTransaformer oMysqlTransaformer = new OMysqlTransaformer();
             try {
-                instrumentation.addTransformer(new OMysqlTransaformer(), true);
+                instrumentation.addTransformer(oMysqlTransaformer, true);
             } catch (Exception e) {
                 System.err.println("open-jdk不支持对jdk自带的包做修改.这个错误可以忽略!");
-                instrumentation.addTransformer(new OMysqlTransaformer());
+                instrumentation.addTransformer(oMysqlTransaformer);
+            }finally {
+                oMysqlTransaformer.init();
             }
         }
     }

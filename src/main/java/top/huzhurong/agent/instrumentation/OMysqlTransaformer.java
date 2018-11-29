@@ -46,7 +46,6 @@ public class OMysqlTransaformer implements ClassFileTransformer {
             }
         }
 
-
         annotations.add(ResultSet.class);
         annotations.add(RowData.class);
 
@@ -66,7 +65,6 @@ public class OMysqlTransaformer implements ClassFileTransformer {
         if (className.startsWith("java")) {
             return classfileBuffer;
         }
-        System.out.println("className:" + className + "\t" + loader);
         //hook 注入
         if (inject_hooks.containsKey(className)) {
             ClassReader classReader = new ClassReader(classfileBuffer);
@@ -103,4 +101,7 @@ public class OMysqlTransaformer implements ClassFileTransformer {
         }
     }
 
+    public void init() {
+        System.out.println("init some thing");
+    }
 }
