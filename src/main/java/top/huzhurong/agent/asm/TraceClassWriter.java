@@ -18,6 +18,7 @@ public class TraceClassWriter extends ClassWriter {
         this.loader = loader;
     }
 
+    @SuppressWarnings("unchecked")
     protected String getCommonSuperClass(final String type1, final String type2) {
         Class c, d;
         try {
