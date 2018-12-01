@@ -14,7 +14,7 @@ import java.lang.reflect.Method;
 public class MysqlHook extends BaseHook {
 
     private MysqlHook() {
-        class_name.add("com.mysql.jdbc.PreparedStatement".replace(".", "/"));
+        class_name.add("com.mysql.jdbc.PreparedStatement");
         method_name.put("executeInternal", null);
     }
 
