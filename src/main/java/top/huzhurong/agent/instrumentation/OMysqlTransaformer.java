@@ -39,10 +39,10 @@ public class OMysqlTransaformer implements ClassFileTransformer {
     static {
         hooks.add(MysqlHook.Instance);
         hooks.add(SunHttpClientHook.Instance);
-
+        System.out.println(MysqlHook.Instance.getClass().getClassLoader());
         for (BaseHook hook : hooks) {
             for (String name : hook.getClassName()) {
-                inject_hooks.put(name.replace("\\.", "/"), hook);
+                inject_hooks.put(name.replaceAll("\\.", "/"), hook);
             }
         }
 
@@ -54,10 +54,11 @@ public class OMysqlTransaformer implements ClassFileTransformer {
                 InjectInterface ii = (InjectInterface) annotation.getAnnotation(InjectInterface.class);
                 String[] value = ii.value();
                 for (String target : value) {
-                    injectInterface.put(target.replace("\\.", "/"), annotation);
+                    injectInterface.put(target.replaceAll("\\.", "/"), annotation);
                 }
             }
         }
+
     }
 
     @Override
@@ -67,10 +68,12 @@ public class OMysqlTransaformer implements ClassFileTransformer {
         }
         //hook 注入
         if (inject_hooks.containsKey(className)) {
+            //java类解析器
             ClassReader classReader = new ClassReader(classfileBuffer);
+            //ClassWriter 以二进制形式生成编译后的类
             ClassWriter classWriter = new TraceClassWriter(classReader, ClassWriter.COMPUTE_MAXS, loader);
-            classReader.accept(new AgentHookVisitor(Opcodes.ASM5, classWriter, injectInterface.get(className), inject_hooks.get(className)),
-                    ClassReader.EXPAND_FRAMES);
+            AgentHookVisitor agentHookVisitor = new AgentHookVisitor(Opcodes.ASM5, classWriter, injectInterface.get(className), inject_hooks.get(className));
+            classReader.accept(agentHookVisitor, ClassReader.EXPAND_FRAMES);
             writeToFile(classWriter, className);
             classfileBuffer = classWriter.toByteArray();
         }

@@ -12,7 +12,7 @@ public class StrictMap<K, V> extends HashMap<K, V> {
         this(16);
     }
 
-    StrictMap(int init) {
+    private StrictMap(int init) {
         super(init);
     }
 
