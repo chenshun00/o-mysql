@@ -1,5 +1,6 @@
 package top.huzhurong.agent.hook.sub;
 
+import com.mysql.jdbc.ResultSetImpl;
 import top.huzhurong.agent.hook.BaseHook;
 import top.huzhurong.agent.inter.sql.ResultSet;
 import top.huzhurong.agent.inter.sql.RowData;
@@ -20,12 +21,20 @@ public class MysqlHook extends BaseHook {
 
     @Override
     public void into(Object curObject, Object[] args) {
-
+        try {
+            Class<?> aClass = Class.forName("com.mysql.jdbc.PreparedStatement");
+            System.out.println(aClass.getClassLoader() +"---out");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void out(Object ret, Object cur, long execTime, Object[] args) {
         try {
+            if (ret instanceof ResultSetImpl){
+                System.out.println("美滋滋");
+            }
             if (ret instanceof ResultSet) {
                 ResultSet resultSet = (ResultSet) ret;
                 RowData asmRowData = resultSet.getASMRowData();
