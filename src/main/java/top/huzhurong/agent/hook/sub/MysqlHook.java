@@ -12,7 +12,7 @@ import top.huzhurong.agent.log.AgentLog;
  */
 public class MysqlHook extends BaseHook {
 
-    private MysqlHook() {
+    public MysqlHook() {
         class_name.add("com.mysql.jdbc.PreparedStatement");
         method_name.put("executeInternal", null);
     }
@@ -21,18 +21,13 @@ public class MysqlHook extends BaseHook {
 
     @Override
     public void into(Object curObject, Object[] args) {
-        try {
-            Class<?> aClass = Class.forName("com.mysql.jdbc.PreparedStatement");
-            System.out.println(aClass.getClassLoader() +"---out");
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        ClassLoader classLoader = this.getClass().getClassLoader();
     }
 
     @Override
     public void out(Object ret, Object cur, long execTime, Object[] args) {
         try {
-            if (ret instanceof ResultSetImpl){
+            if (ret instanceof ResultSetImpl) {
                 System.out.println("美滋滋");
             }
             if (ret instanceof ResultSet) {

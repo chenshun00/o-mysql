@@ -64,6 +64,8 @@ public class App {
         }
         Timer.init();
         instrumentation = inst;
+        System.out.println("classLoader\t"+App.class.getClassLoader());
+        System.out.println("thread\t"+Thread.currentThread().getContextClassLoader());
         OMysqlTransaformer oMysqlTransaformer = new OMysqlTransaformer();
         try {
             instrumentation.addTransformer(oMysqlTransaformer, true);

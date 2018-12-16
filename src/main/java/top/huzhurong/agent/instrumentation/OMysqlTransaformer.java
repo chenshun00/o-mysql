@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author luobo.cs@raycloud.com
@@ -36,35 +37,17 @@ public class OMysqlTransaformer implements ClassFileTransformer {
     private static Map<String, BaseHook> inject_hooks = new HashMap<>();
     private static Set<BaseHook> hooks = new HashSet<>();
 
-    static {
-        hooks.add(MysqlHook.Instance);
-        hooks.add(SunHttpClientHook.Instance);
-        System.out.println(MysqlHook.Instance.getClass().getClassLoader());
-        for (BaseHook hook : hooks) {
-            for (String name : hook.getClassName()) {
-                inject_hooks.put(name.replaceAll("\\.", "/"), hook);
-            }
-        }
-
-        annotations.add(ResultSet.class);
-        annotations.add(RowData.class);
-
-        for (Class annotation : annotations) {
-            if (annotation.isAnnotationPresent(InjectInterface.class)) {
-                InjectInterface ii = (InjectInterface) annotation.getAnnotation(InjectInterface.class);
-                String[] value = ii.value();
-                for (String target : value) {
-                    injectInterface.put(target.replaceAll("\\.", "/"), annotation);
-                }
-            }
-        }
-
-    }
+    private static AtomicBoolean atomicBoolean = new AtomicBoolean(false);
+    private static boolean init = false;
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         if (className.startsWith("java")) {
             return classfileBuffer;
+        }
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        if (contextClassLoader.getClass().getName().contains("WebappClassLoader")) {
+            checkAgain(contextClassLoader);
         }
         //hook 注入
         if (inject_hooks.containsKey(className)) {
@@ -88,6 +71,42 @@ public class OMysqlTransaformer implements ClassFileTransformer {
         }
 
         return classfileBuffer;
+    }
+
+    private void checkAgain(ClassLoader contextClassLoader) {
+        if (init) {
+            return;
+        }
+        init = true;
+        System.out.println("开始初始化\t" + contextClassLoader);
+        try {
+            Class<?> aClass = Class.forName(MysqlHook.class.getName(), true, contextClassLoader);
+            MysqlHook mysqlHook = (MysqlHook) aClass.newInstance();
+            System.out.println("加入mysqlHook 成功");
+            hooks.add(mysqlHook);
+
+
+            annotations.add(Class.forName(ResultSet.class.getName(), true, contextClassLoader));
+            annotations.add(Class.forName(RowData.class.getName(), true, contextClassLoader));
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        for (BaseHook hook : hooks) {
+            for (String name : hook.getClassName()) {
+                inject_hooks.put(name.replaceAll("\\.", "/"), hook);
+            }
+        }
+
+        for (Class annotation : annotations) {
+            if (annotation.isAnnotationPresent(InjectInterface.class)) {
+                InjectInterface ii = (InjectInterface) annotation.getAnnotation(InjectInterface.class);
+                String[] value = ii.value();
+                for (String target : value) {
+                    injectInterface.put(target.replaceAll("\\.", "/"), annotation);
+                }
+            }
+        }
     }
 
     /**
