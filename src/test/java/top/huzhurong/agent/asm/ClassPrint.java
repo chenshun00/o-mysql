@@ -22,7 +22,7 @@ import org.objectweb.asm.MethodVisitor;
  * //最后的数组
  * byte[] b2 = cw.toByteArray(); // b2 与 b1 表示同一个类
  *
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/12/7
  */
 public class ClassPrint extends ClassVisitor {

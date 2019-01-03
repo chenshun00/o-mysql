@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * jul 日志，支持占位符语法
  *
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/9/29
  */
 public class AgentLog extends AbstractLog {

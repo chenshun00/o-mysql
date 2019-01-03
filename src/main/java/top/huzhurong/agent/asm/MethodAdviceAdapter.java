@@ -13,7 +13,7 @@ import top.huzhurong.agent.hook.HookUtils;
  * 1、方法参数入栈，例如dup(),加入其他参数，ldc都可以
  * 2、调用方法 invoke，根据方法的描述符去栈顶拿参数
  *
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/9/29
  */
 public class MethodAdviceAdapter extends AdviceAdapter {

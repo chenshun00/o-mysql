@@ -7,7 +7,7 @@ import top.huzhurong.agent.inter.sql.RowData;
 import top.huzhurong.agent.log.AgentLog;
 
 /**
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/10/14
  */
 public class MysqlHook extends BaseHook {

@@ -12,7 +12,7 @@ import java.net.URLClassLoader;
 import java.util.jar.JarFile;
 
 /**
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/9/29
  */
 public class App {

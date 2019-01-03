@@ -3,7 +3,7 @@ package top.huzhurong.agent.hook.sub.http;
 import top.huzhurong.agent.hook.BaseHook;
 
 /**
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/11/28
  */
 public class SunHttpClientHook extends BaseHook {

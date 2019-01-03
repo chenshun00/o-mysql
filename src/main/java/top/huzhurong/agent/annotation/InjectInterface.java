@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * 注入的接口
  *
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/10/13
  */
 @Retention(RetentionPolicy.RUNTIME)

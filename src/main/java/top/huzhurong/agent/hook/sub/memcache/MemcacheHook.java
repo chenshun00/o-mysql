@@ -3,7 +3,7 @@ package top.huzhurong.agent.hook.sub.memcache;
 import top.huzhurong.agent.hook.BaseHook;
 
 /**
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/12/1
  */
 public class MemcacheHook extends BaseHook {

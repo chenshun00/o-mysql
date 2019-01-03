@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * 可以建立异步队列，异步输出数据到后端tomcat,es等等
  *
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/11/29
  */
 public class HttpUtil {

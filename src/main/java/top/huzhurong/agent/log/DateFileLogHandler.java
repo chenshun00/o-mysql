@@ -11,7 +11,7 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
 /**
- * @author luobo.cs@raycloud.com
+ * @author chenshun00@gmail.com
  * @since 2018/9/29
  */
 class DateFileLogHandler extends Handler {
